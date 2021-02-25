@@ -3,7 +3,7 @@
 
 using namespace std;
 
-#define POINT_ITEM(a, r, c) (*((*(a + r)) + c))
+#define POINT_ITEM(a, x, y) (*((*(a + y)) + x))
 #define CHECK_DOT(x, sz) ((x) >= 0 && (x) < (sz))
 
 enum PLAYER {HUMAN='X', AI='0', EMPTY='_'};
@@ -15,12 +15,12 @@ typedef struct {
   int towin;
 } Field;
 
-char getVal(PLAYER** array, const int col, const int row) {
-  return POINT_ITEM(array, row, col);
+char getVal(PLAYER** array, const int x, const int y) {
+  return POINT_ITEM(array, x, y);
 }
 
-void setVal(PLAYER** array, const int col, const int row, PLAYER value) {
-  POINT_ITEM(array, row, col) = value;
+void setVal(PLAYER** array, const int x, const int y, PLAYER value) {
+  POINT_ITEM(array, x, y) = value;
 }
 
 bool isValid(Field &field, int x, int y) {
@@ -33,8 +33,6 @@ bool isEmpty(Field &field, int x, int y) {
 
 void initGame(Field &field) {
   field.towin = 3;
-  field.szY = 3;
-  field.szX = 3;
   field.map = new PLAYER* [field.szY];
   for (int y = 0; y < field.szY; ++y) {
       *(field.map + y) = new PLAYER [field.szX];
@@ -46,11 +44,15 @@ void initGame(Field &field) {
 
 void printField(Field &field) {
   system("clear");
-  cout << "   1 2 3"<< endl;
-  for (int i = 0; i < field.szY; ++i) {
-      cout << " " << i+1 << "|";
-      for (int j = 0; j < field.szX; ++j) {
-          cout << getVal(field.map, i, j) << "|";
+  cout << "   ";
+  for (int i = 1; i <= field.szX; i++) {
+      cout << " "<< i;
+    }
+  cout << endl;
+  for (int y = 0; y < field.szY; ++y) {
+      cout << " " << y + 1 << " |";
+      for (int x = 0; x < field.szX; ++x) {
+          cout << getVal(field.map, x, y) << "|";
         }
       cout << endl;
     }
@@ -61,7 +63,7 @@ void turnHuman(Field &field) {
   int x, y;
   do {
       cout << "Введите номер строки и столбца через пробел: ";
-      cin >> x >> y;
+      cin >> y >> x;
       x--;
       y--;
   }
@@ -74,11 +76,12 @@ void turnAi(Field &field) {
 
   random_device rd;
   mt19937 mt(rd());
-  uniform_real_distribution <double> dist(0, 3);
+  uniform_real_distribution <double> distx(0, field.szX);
+  uniform_real_distribution <double> disty(0, field.szY);
 
   do {
-      x = dist(mt);
-      y = dist(mt);
+      x = distx(mt);
+      y = disty(mt);
     }
   while (!isEmpty(field, x, y));
   setVal(field.map, x, y, AI);
@@ -91,14 +94,14 @@ bool checkLine(Field &field, int x, int y, int vx, int vy, int len, PLAYER playe
   if (!isValid(field, endx, endy))
     return false;
   for (int i = 0; i < len; i++)
-    if (getVal(field.map, (y + i * vy), (x + i * vx)) != player)
+    if (getVal(field.map, (x + i * vx), (y + i * vy)) != player)
       return false;
   return true;
 }
 
 bool checkWin(Field &field, PLAYER player) {
-  for (int y = 0; y < field.szX; y++) {
-      for (int x = 0; x < field.szY; x++) {
+  for (int y = 0; y < field.szY; y++) {
+      for (int x = 0; x < field.szX; x++) {
           if (checkLine(field, x, y, 1, 0, field.towin, player)) return true;
           if (checkLine(field, x, y, 1, 1, field.towin, player)) return true;
           if (checkLine(field, x, y, 0, 1, field.towin, player)) return true;
@@ -119,6 +122,11 @@ bool checkDraw(Field &field) {
 int main()
 {
   Field field;
+  cout << "Введите количество строк по высоте: ";
+  cin >> field.szY;
+  cout << "Введите количество столбцов по ширине: ";
+  cin >> field.szX;
+
   initGame(field);
 
   while (true) {
