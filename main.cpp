@@ -151,79 +151,80 @@ int checkHumanWin(Field &field) {
 }
 
 void turnAi(Field &field) {
-  int a = 0, b = 0;
-  a = checkAiWin(field);
-  if (a == 0) {
-    b = checkHumanWin(field);
-    if (b == 0) {
-        int x, y;
+    int a = 0, b = 0;
+    a = checkAiWin(field);
+    if (a == 0) {
+      b = checkHumanWin(field);
+      if (b == 0) {
+          int x, y;
 
-        random_device rd;
-        mt19937 mt(rd());
-        uniform_real_distribution <double> distx(0, field.szX);
-        uniform_real_distribution <double> disty(0, field.szY);
+          random_device rd;
+          mt19937 mt(rd());
+          uniform_real_distribution <double> distx(0, field.szX);
+          uniform_real_distribution <double> disty(0, field.szY);
 
-        do {
-            x = distx(mt);
-            y = disty(mt);
-          }
-        while (!isEmpty(field, x, y));
-        setVal(field.map, x, y, AI);
-      }
+          do {
+              x = distx(mt);
+              y = disty(mt);
+            }
+          while (!isEmpty(field, x, y));
+          setVal(field.map, x, y, AI);
+        }
     }
 }
 
 void tictactoe() {
   while (true) {
       Field field;
+
       system("clear");
 
       do {
           cout << "Новая игра\nВведите количество строк и столбцов (от 3 до 9): ";
           cin >> field.szY;
           cin.ignore(65535,'\n');
-        }
+      }
       while (!checkCin() || (field.szY < 3 || field.szY > 9));
       do {
           cout << "Введите количество столбцов по ширине (от 3 до 9): ";
           cin >> field.szX;
           cin.ignore(65535,'\n');
-        }
+      }
       while (!checkCin() || (field.szX < 3 || field.szX > 9));
 
-     initGame(field);
+      initGame(field);
 
-     while (true) {
-         printField(field);
-         turnHuman(field);
-         if (checkWin(field, HUMAN) || checkDraw(field)) {
-             printField(field);
-             if (checkWin(field, HUMAN)) {
-                 cout << "Human win" << endl;
-               }
-             else {
-                 cout << "Draw" << endl;
-               }
-             break;
-           }
-         turnAi(field);
-         if (checkWin(field, AI) || checkDraw(field)) {
-             printField(field);
-             cout << "AI win" << endl;
-             break;
-           }
-       }
-
-     string answer;
-     cout << "PLay again? (Y): ";
-     cin >> answer;
-
-     transform(answer.begin(), answer.end(), answer.begin(), ::tolower);
-
-     if(answer.find('y') != 0) {
-         break;
+      while (true) {
+          printField(field);
+          turnHuman(field);
+          if (checkWin(field, HUMAN) || checkDraw(field)) {
+            printField(field);
+            if (checkWin(field, HUMAN)) {
+                cout << "Human win" << endl;
+              }
+            else {
+                cout << "Draw" << endl;
+              }
+            break;
+          }
+        turnAi(field);
+        if (checkWin(field, AI) || checkDraw(field)) {
+            printField(field);
+            cout << "AI win" << endl;
+            break;
+          }
       }
-  }
+
+      string answer;
+      cout << "PLay again? (Y): ";
+      cin >> answer;
+
+      transform(answer.begin(), answer.end(), answer.begin(), ::tolower);
+
+      if(answer.find('y') != 0) {
+          break;
+        }
+    }
 }
 
 int main()
