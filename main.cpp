@@ -1,5 +1,6 @@
 #include <iostream>
 #include <random>
+#include <algorithm>
 
 using namespace std;
 
@@ -31,6 +32,16 @@ bool isEmpty(Field &field, int x, int y) {
   return getVal(field.map, x, y) == EMPTY;
 }
 
+//Функция проверки на корректность введённых данных
+bool checkCin() {
+  if (cin.fail()){
+  cin.clear();
+  cin.ignore(65535,'\n');
+  return false;
+  }
+  return true;
+}
+
 void initGame(Field &field) {
   field.towin = 3;
   field.map = new PLAYER* [field.szY];
@@ -58,35 +69,6 @@ void printField(Field &field) {
     }
   cout << endl;
 }
-
-void turnHuman(Field &field) {
-  int x, y;
-  do {
-      cout << "Введите номер строки и столбца через пробел: ";
-      cin >> y >> x;
-      x--;
-      y--;
-  }
-  while (!isValid(field, x, y) || !isEmpty(field, x, y));
-  setVal(field.map, x, y, HUMAN);
-}
-
-void turnAi(Field &field) {
-  int x, y;
-
-  random_device rd;
-  mt19937 mt(rd());
-  uniform_real_distribution <double> distx(0, field.szX);
-  uniform_real_distribution <double> disty(0, field.szY);
-
-  do {
-      x = distx(mt);
-      y = disty(mt);
-    }
-  while (!isEmpty(field, x, y));
-  setVal(field.map, x, y, AI);
-}
-
 bool checkLine(Field &field, int x, int y, int vx, int vy, int len, PLAYER player) {
   const int endx = x + (len - 1) * vx;
   const int endy = y + (len - 1) * vy;
@@ -119,31 +101,134 @@ bool checkDraw(Field &field) {
   return true;
 }
 
-int main()
-{
-  Field field;
-  cout << "Введите количество строк по высоте: ";
-  cin >> field.szY;
-  cout << "Введите количество столбцов по ширине: ";
-  cin >> field.szX;
+void turnHuman(Field &field) {
+  int x, y;
+  do {
+      cout << "Введите номер строки и столбца через пробел: ";
+      cin >> y >> x;
+      x--;
+      y--;
 
-  initGame(field);
+      cin.ignore(65535,'\n');//Чистка буфера для предотвращения ввода сразу нескольких ходов подряд
+  }
+  while (!checkCin() || (!isValid(field, x, y) || !isEmpty(field, x, y)));
+  setVal(field.map, x, y, HUMAN);
+}
 
-  while (true) {
-      printField(field);
-      turnHuman(field);
-      if (checkWin(field, HUMAN) || checkDraw(field)) {
-          printField(field);
-          cout << "Human win" << endl;
-          break;
-        }
-      turnAi(field);
-      if (checkWin(field, AI) || checkDraw(field)) {
-          printField(field);
-          cout << "AI win" << endl;
-          break;
+int checkAiWin(Field &field){
+  for (int y = 0; y < field.szY; y++) {
+      for (int x = 0; x < field.szX; x++) {
+          if (isEmpty(field, x, y)) {
+              setVal(field.map, x, y, AI);
+              if (checkWin(field, AI)) {
+                  return 1;
+                }
+              else {
+                setVal(field.map, x, y, EMPTY);
+                }
+            }
         }
     }
+  return 0;
+}
+
+int checkHumanWin(Field &field) {
+  for (int y = 0; y < field.szY; y++) {
+      for (int x = 0; x < field.szX; x++) {
+          if (isEmpty(field, x, y)) {
+              setVal(field.map, x, y, HUMAN);
+              if (checkWin(field, HUMAN)) {
+                  setVal(field.map, x, y, AI);
+                  return 1;
+                }
+              else {
+                  setVal(field.map, x, y, EMPTY);
+                }
+            }
+        }
+    }
+  return 0;
+}
+
+void turnAi(Field &field) {
+  int a = 0, b = 0;
+  a = checkAiWin(field);
+  if (a == 0) {
+    b = checkHumanWin(field);
+    if (b == 0) {
+        int x, y;
+
+        random_device rd;
+        mt19937 mt(rd());
+        uniform_real_distribution <double> distx(0, field.szX);
+        uniform_real_distribution <double> disty(0, field.szY);
+
+        do {
+            x = distx(mt);
+            y = disty(mt);
+          }
+        while (!isEmpty(field, x, y));
+        setVal(field.map, x, y, AI);
+      }
+    }
+}
+
+void tictactoe() {
+  while (true) {
+      Field field;
+      system("clear");
+
+      do {
+          cout << "Новая игра\nВведите количество строк и столбцов (от 3 до 9): ";
+          cin >> field.szY;
+          cin.ignore(65535,'\n');
+        }
+      while (!checkCin() || (field.szY < 3 || field.szY > 9));
+      do {
+          cout << "Введите количество столбцов по ширине (от 3 до 9): ";
+          cin >> field.szX;
+          cin.ignore(65535,'\n');
+        }
+      while (!checkCin() || (field.szX < 3 || field.szX > 9));
+
+     initGame(field);
+
+     while (true) {
+         printField(field);
+         turnHuman(field);
+         if (checkWin(field, HUMAN) || checkDraw(field)) {
+             printField(field);
+             if (checkWin(field, HUMAN)) {
+                 cout << "Human win" << endl;
+               }
+             else {
+                 cout << "Draw" << endl;
+               }
+             break;
+           }
+         turnAi(field);
+         if (checkWin(field, AI) || checkDraw(field)) {
+             printField(field);
+             cout << "AI win" << endl;
+             break;
+           }
+       }
+
+     string answer;
+     cout << "PLay again? (Y): ";
+     cin >> answer;
+
+     transform(answer.begin(), answer.end(), answer.begin(), ::tolower);
+
+     if(answer.find('y') != 0) {
+         break;
+      }
+  }
+}
+
+int main()
+{
+  tictactoe();
 
   return 0;
 }
